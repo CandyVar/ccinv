@@ -1,0 +1,539 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Настройка кликера</title>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap">
+    <style>
+        :root {
+            /* Default theme (dark) */
+            --primary: #6D28D9;
+            --primary-hover: #7C3AED;
+            --bg-dark: #0F172A;
+            --bg-card: #1E293B;
+            --text: #E2E8F0;
+            --text-muted: #94A3B8;
+            --border: #2D3748;
+            --success: #10B981;
+            --gradient-start: #6D28D9;
+            --gradient-end: #9333EA;
+        }
+
+        [data-theme="light"] {
+            --primary: #8B5CF6;
+            --primary-hover: #7C3AED;
+            --bg-dark: #F1F5F9;
+            --bg-card: #ffffff;
+            --text: #1E293B;
+            --text-muted: #64748B;
+            --border: #E2E8F0;
+            --success: #059669;
+            --gradient-start: #8B5CF6;
+            --gradient-end: #6D28D9;
+        }
+
+        [data-theme="cyberpunk"] {
+            --primary: #FF0080;
+            --primary-hover: #FF3D9A;
+            --bg-dark: #000000;
+            --bg-card: #0A0A0F;
+            --text: #00FFF5;
+            --text-muted: #4DFFEB;
+            --border: #FF0080;
+            --success: #00FF9F;
+            --gradient-start: #FF0080;
+            --gradient-end: #7928CA;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-dark);
+            color: var(--text);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            line-height: 1.6;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow-x: hidden;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: radial-gradient(
+                circle at top right,
+                color-mix(in srgb, var(--gradient-start) 15%, transparent),
+                transparent 50%
+            );
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .container {
+            max-width: 480px;
+            margin: 2rem auto;
+            padding: 0 1rem;
+            width: 100%;
+            position: relative;
+            z-index: 1;
+        }
+
+        .theme-switcher {
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
+            margin-top: 2rem;
+            padding: 1rem;
+        }
+
+        .theme-btn {
+            width: 3rem;
+            height: 3rem;
+            border: 2px solid var(--primary);
+            background: var(--bg-card);
+            border-radius: 50%;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .theme-btn::before {
+            content: '';
+            position: absolute;
+            inset: 3px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--gradient-start), var(--gradient-end));
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .theme-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(var(--primary), 0.3);
+        }
+
+        .theme-btn.active {
+            border-color: var(--gradient-end);
+        }
+
+        .theme-btn.active::before {
+            opacity: 1;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 2rem;
+            padding: 2rem 0;
+            position: relative;
+            animation: fadeIn 0.8s ease-out;
+        }
+
+        .header::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 60px;
+            height: 4px;
+            background: linear-gradient(to right, var(--gradient-start), var(--gradient-end));
+            border-radius: 2px;
+            animation: expandWidth 0.8s ease-out;
+        }
+
+        @keyframes expandWidth {
+            from { width: 0; }
+            to { width: 60px; }
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+            background: linear-gradient(135deg, var(--gradient-start) 0%, var(--gradient-end) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            animation: gradientText 3s ease infinite;
+            background-size: 200% 200%;
+        }
+
+        @keyframes gradientText {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        .header p {
+            color: var(--text-muted);
+            font-size: 1.1rem;
+        }
+
+        .card {
+            background: var(--bg-card);
+            border-radius: 24px;
+            padding: 2rem;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1),
+                        0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            animation: slideUp 0.8s ease-out;
+            transition: all 0.3s ease;
+            border: 1px solid color-mix(in srgb, var(--border) 50%, transparent);
+            backdrop-filter: blur(10px);
+        }
+
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 12px rgba(0, 0, 0, 0.2),
+                        0 0 0 1px color-mix(in srgb, var(--primary) 30%, transparent);
+        }
+
+        .form-group {
+            margin-bottom: 1.5rem;
+            animation: fadeIn 0.8s ease-out;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 0.5rem;
+            color: var(--text);
+            font-weight: 500;
+            transition: all 0.3s ease;
+        }
+
+        input, select {
+            width: 100%;
+            padding: 0.75rem 1rem;
+            padding-right: 3rem;
+            background: color-mix(in srgb, var(--bg-dark) 70%, transparent);
+            border: 2px solid var(--border);
+            border-radius: 12px;
+            color: var(--text);
+            font-size: 1rem;
+            transition: all 0.3s ease;
+            -moz-appearance: textfield;
+            appearance: none;
+        }
+
+        /* Custom select styling */
+        select {
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='%2394A3B8' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 1rem center;
+            background-size: 1.2em;
+            cursor: pointer;
+        }
+
+        /* Remove number input arrows */
+        input::-webkit-outer-spin-button,
+        input::-webkit-inner-spin-button {
+            -webkit-appearance: none;
+            margin: 0;
+        }
+
+        input:focus, select:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px color-mix(in srgb, var(--primary) 30%, transparent);
+        }
+
+        .input-wrapper {
+            position: relative;
+        }
+
+        .input-wrapper.delay::after {
+            content: 'мс';
+            position: absolute;
+            right: 1rem;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--text-muted);
+            pointer-events: none;
+            font-size: 0.9rem;
+        }
+
+        button[type="submit"] {
+            width: 100%;
+            padding: 1rem;
+            background: linear-gradient(135deg, var(--gradient-start), var(--gradient-end));
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-top: 1rem;
+            position: relative;
+            overflow: hidden;
+        }
+
+        button[type="submit"]::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, transparent, rgba(255, 255, 255, 0.2));
+            transform: translateX(-100%);
+            transition: transform 0.5s ease;
+        }
+
+        button[type="submit"]:hover::before {
+            transform: translateX(100%);
+        }
+
+        button[type="submit"]:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px color-mix(in srgb, var(--primary) 50%, transparent);
+        }
+
+        button[type="submit"]:active {
+            transform: translateY(0);
+        }
+
+        .pulse {
+            animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        .success-message {
+            display: none;
+            text-align: center;
+            color: var(--success);
+            margin-top: 1rem;
+            padding: 0.75rem;
+            border-radius: 12px;
+            background: color-mix(in srgb, var(--success) 10%, transparent);
+            animation: slideDown 0.3s ease-out;
+            border: 1px solid color-mix(in srgb, var(--success) 30%, transparent);
+        }
+
+        @keyframes slideDown {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* Mode select styling */
+        .select-wrapper {
+            position: relative;
+        }
+
+        .mode-option {
+            transition: all 0.3s ease;
+        }
+
+        /* Custom styling for options */
+        select option {
+            background-color: var(--bg-card);
+            color: var(--text);
+            padding: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header class="header">
+            <h1>CandyH Clicker</h1>
+            <p>Настройте кликер под себя</p>
+            <p>Нажми END что бы применить изменения</p>
+        </header>
+
+        <div class="card">
+            <form id="clickerForm" method="post">
+                <div class="form-group">
+                    <label for="mindel">Минимальный кпс</label>
+                    <div class="input-wrapper">
+                        <input
+                            type="number"
+                            id="mindel"
+                            name="mindel"
+                            value="{{ mindel }}"
+                            min="0"
+                            step="1"
+                            required
+                        >
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="maxdel">Максимальный кпс</label>
+                    <div class="input-wrapper">
+                        <input
+                            type="number"
+                            id="maxdel"
+                            name="maxdel"
+                            value="{{ maxdel }}"
+                            min="0"
+                            step="1"
+                            required
+                        >
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="clickdel">Задержка на клике</label>
+                    <div class="input-wrapper">
+                        <input
+                            type="number"
+                            id="clickdel"
+                            name="clickdel"
+                            value="{{ clickdel }}"
+                            min="0"
+                            step="1"
+                            required
+                        >
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="mode">Режим рандомизации </label>
+                    <div class="select-wrapper">
+                        <select
+                            id="mode"
+                            name="mode"
+                            required
+                        >
+                            <option value="legit" {{ 'selected' if mode == 'legit' else '' }}>Legit</option>
+                            <option value="blatant" {{ 'selected' if mode == 'blatant' else '' }}>Blatant</option>
+                            <option value="test" {{ 'selected' if mode == 'test' else '' }}>Test</option>
+                        </select>
+                    </div>
+                </div>
+
+                <button type="submit">
+                    Сохранить изменения
+                </button>
+            </form>
+            <div id="successMessage" class="success-message">
+                Настройки успешно сохранены
+            </div>
+        </div>
+
+<!--        <div class="theme-switcher">-->
+<!--            <button class="theme-btn active" data-theme="dark" title="Тёмная тема"></button>-->
+<!--            <button class="theme-btn" data-theme="light" title="Светлая тема"></button>-->
+<!--            <button class="theme-btn" data-theme="cyberpunk" title="Киберпанк"></button>-->
+<!--        </div>-->
+    </div>
+
+    <script>
+        // Theme switcher
+        // const themeSwitcher = document.querySelector('.theme-switcher');
+        // const themeButtons = document.querySelectorAll('.theme-btn');
+        //
+        // // Load saved theme or default to dark
+        // const savedTheme = localStorage.getItem('theme') || 'dark';
+        // document.documentElement.setAttribute('data-theme', savedTheme);
+        // themeButtons.forEach(btn => {
+        //     if (btn.dataset.theme === savedTheme) {
+        //         btn.classList.add('active');
+        //     } else {
+        //         btn.classList.remove('active');
+        //     }
+        // });
+
+        // themeSwitcher.addEventListener('click', (e) => {
+        //     if (e.target.classList.contains('theme-btn')) {
+        //         const theme = e.target.dataset.theme;
+        //         document.documentElement.setAttribute('data-theme', theme);
+        //         localStorage.setItem('theme', theme);
+        //
+        //         // Update active state
+        //         themeButtons.forEach(btn => btn.classList.remove('active'));
+        //         e.target.classList.add('active');
+        //     }
+        // });
+
+        // Form handling
+        document.getElementById("clickerForm").addEventListener("submit", async function(event) {
+            event.preventDefault();
+
+            const button = this.querySelector('button');
+            const successMessage = document.getElementById('successMessage');
+            const originalText = button.textContent;
+
+            // Disable button and show loading state
+            button.disabled = true;
+            button.textContent = 'Сохранение...';
+            button.classList.add('pulse');
+
+            try {
+                const formData = new FormData(this);
+                const response = await fetch(window.location.href, {
+                    method: "POST",
+                    body: formData
+                });
+
+                if (response.ok) {
+                    // Show success message with animation
+                    successMessage.style.display = 'block';
+                    successMessage.style.animation = 'slideDown 0.3s ease-out';
+                    setTimeout(() => {
+                        successMessage.style.animation = 'slideUp 0.3s ease-out';
+                        setTimeout(() => {
+                            successMessage.style.display = 'none';
+                        }, 300);
+                    }, 3000);
+                } else {
+                    throw new Error('Ошибка сохранения');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                button.textContent = 'Ошибка! Попробуйте снова';
+            } finally {
+                // Reset button state
+                setTimeout(() => {
+                    button.disabled = false;
+                    button.textContent = originalText;
+                    button.classList.remove('pulse');
+                }, 1000);
+            }
+        });
+
+    </script>
+</body>
+</html>

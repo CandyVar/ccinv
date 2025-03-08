@@ -1,0 +1,587 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Редактировать пользователя</title>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap">
+    <style>
+        :root {
+            /* Default theme (dark) */
+            --primary: #6D28D9;
+            --primary-hover: #7C3AED;
+            --bg-dark: #0F172A;
+            --bg-card: #1E293B;
+            --text: #E2E8F0;
+            --text-muted: #94A3B8;
+            --border: #2D3748;
+            --success: #10B981;
+            --error: #EF4444;
+            --danger: #DC2626;
+            --danger-hover: #B91C1C;
+            --gradient-start: #6D28D9;
+            --gradient-end: #9333EA;
+        }
+
+        [data-theme="light"] {
+            --primary: #8B5CF6;
+            --primary-hover: #7C3AED;
+            --bg-dark: #F1F5F9;
+            --bg-card: #ffffff;
+            --text: #1E293B;
+            --text-muted: #64748B;
+            --border: #E2E8F0;
+            --success: #059669;
+            --error: #DC2626;
+            --danger: #EF4444;
+            --danger-hover: #DC2626;
+            --gradient-start: #8B5CF6;
+            --gradient-end: #6D28D9;
+        }
+
+        [data-theme="cyberpunk"] {
+            --primary: #FF0080;
+            --primary-hover: #FF3D9A;
+            --bg-dark: #000000;
+            --bg-card: #0A0A0F;
+            --text: #00FFF5;
+            --text-muted: #4DFFEB;
+            --border: #FF0080;
+            --success: #00FF9F;
+            --error: #FF3D3D;
+            --danger: #FF0000;
+            --danger-hover: #FF3333;
+            --gradient-start: #FF0080;
+            --gradient-end: #7928CA;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-dark);
+            color: var(--text);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            line-height: 1.6;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow-x: hidden;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: radial-gradient(
+                circle at top right,
+                color-mix(in srgb, var(--gradient-start) 15%, transparent),
+                transparent 50%
+            );
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .container {
+            max-width: 640px;
+            margin: 2rem auto;
+            padding: 0 1.5rem;
+            width: 100%;
+            position: relative;
+            z-index: 1;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 2rem;
+            padding: 2rem 0 1.5rem;
+            position: relative;
+            animation: fadeIn 0.8s ease-out;
+        }
+
+        .header::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 50px;
+            height: 3px;
+            background: linear-gradient(to right, var(--gradient-start), var(--gradient-end));
+            border-radius: 2px;
+            animation: expandWidth 0.8s ease-out;
+        }
+
+        @keyframes expandWidth {
+            from { width: 0; }
+            to { width: 50px; }
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(-15px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .header h1 {
+            font-size: 2.2rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+            background: linear-gradient(135deg, var(--gradient-start) 0%, var(--gradient-end) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            animation: gradientText 3s ease infinite;
+            background-size: 200% 200%;
+            letter-spacing: -0.5px;
+            text-transform: uppercase;
+        }
+
+        @keyframes gradientText {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        .header p {
+            color: var(--text-muted);
+            font-size: 1rem;
+        }
+
+        .card {
+            background: var(--bg-card);
+            border-radius: 20px;
+            padding: 2.2rem;
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.2),
+                        0 10px 10px -5px rgba(0, 0, 0, 0.1);
+            animation: slideUp 0.8s ease-out;
+            transition: all 0.3s ease;
+            border: 1px solid color-mix(in srgb, var(--border) 50%, transparent);
+            backdrop-filter: blur(10px);
+            position: relative;
+            overflow: hidden;
+        }
+
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 15px 25px rgba(0, 0, 0, 0.2),
+                        0 0 0 1px color-mix(in srgb, var(--primary) 30%, transparent);
+        }
+
+        .form-group {
+            margin-bottom: 1.8rem;
+            animation: fadeIn 0.8s ease-out;
+            position: relative;
+        }
+
+        .form-group:last-of-type {
+            margin-bottom: 2rem;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 0.7rem;
+            color: var(--text);
+            font-weight: 600;
+            transition: all 0.3s ease;
+            font-size: 1rem;
+            letter-spacing: 0.5px;
+        }
+
+        input, textarea {
+            width: 100%;
+            padding: 0.9rem 1.2rem;
+            padding-left: 3rem;
+            background: color-mix(in srgb, var(--bg-dark) 70%, transparent);
+            border: 2px solid var(--border);
+            border-radius: 14px;
+            color: var(--text);
+            font-size: 1.05rem;
+            transition: all 0.3s ease;
+            font-weight: 500;
+            font-family: 'Inter', sans-serif;
+        }
+
+        textarea {
+            min-height: 100px;
+            resize: vertical;
+        }
+
+        input:focus, textarea:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px color-mix(in srgb, var(--primary) 30%, transparent);
+            transform: translateY(-2px);
+        }
+
+        .input-wrapper {
+            position: relative;
+        }
+
+        .input-icon {
+            position: absolute;
+            left: 1.2rem;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--text-muted);
+            pointer-events: none;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .input-icon svg {
+            width: 1.2rem;
+            height: 1.2rem;
+            stroke: var(--text-muted);
+        }
+
+        button {
+            width: 100%;
+            padding: 1rem;
+            border: none;
+            border-radius: 14px;
+            font-size: 1.05rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-top: 1rem;
+            position: relative;
+            overflow: hidden;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.7rem;
+            color: white;
+        }
+
+        button[type="submit"] {
+            background: linear-gradient(135deg, var(--gradient-start), var(--gradient-end));
+        }
+
+        .delete-button {
+            background: linear-gradient(135deg, var(--danger), var(--danger-hover));
+            margin-top: 1.5rem;
+        }
+
+        button svg {
+            width: 1.2rem;
+            height: 1.2rem;
+            stroke: white;
+            transition: all 0.3s ease;
+        }
+
+        button::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, transparent, rgba(255, 255, 255, 0.3));
+            transform: translateX(-100%);
+            transition: transform 0.5s ease;
+        }
+
+        button:hover::before {
+            transform: translateX(100%);
+        }
+
+        button:hover {
+            transform: translateY(-3px);
+        }
+
+        button[type="submit"]:hover {
+            box-shadow: 0 8px 15px color-mix(in srgb, var(--primary) 50%, transparent);
+        }
+
+        .delete-button:hover {
+            box-shadow: 0 8px 15px color-mix(in srgb, var(--danger) 50%, transparent);
+        }
+
+        button:hover svg {
+            transform: translateX(3px);
+        }
+
+        button:active {
+            transform: translateY(-1px);
+        }
+
+        .theme-switcher {
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
+            margin-top: 2rem;
+        }
+
+        .theme-btn {
+            width: 3.2rem;
+            height: 3.2rem;
+            background: var(--bg-card);
+            border-radius: 50%;
+            cursor: pointer;
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: none;
+            padding: 0;
+        }
+
+        .theme-btn::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--gradient-start), var(--gradient-end));
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            z-index: 1;
+        }
+
+        .theme-btn svg {
+            width: 1.5rem;
+            height: 1.5rem;
+            position: relative;
+            z-index: 2;
+            fill: var(--text);
+            opacity: 0.7;
+            transition: all 0.3s ease;
+        }
+
+        .theme-btn:hover {
+            transform: translateY(-3px) scale(1.05);
+            box-shadow: 0 8px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        .theme-btn:hover svg {
+            opacity: 1;
+            transform: scale(1.1);
+        }
+
+        .theme-btn.active {
+            transform: scale(1.15);
+        }
+
+        .theme-btn.active::before {
+            opacity: 1;
+        }
+
+        .theme-btn.active svg {
+            opacity: 1;
+            filter: drop-shadow(0 0 3px rgba(255, 255, 255, 0.5));
+        }
+
+        @keyframes float {
+            0% { transform: translateY(0px); }
+            50% { transform: translateY(-5px); }
+            100% { transform: translateY(0px); }
+        }
+
+        .float {
+            animation: float 3s ease-in-out infinite;
+        }
+
+        /* Glowing effect for active theme */
+        .theme-btn.active {
+            box-shadow: 0 0 10px var(--primary), 0 0 20px color-mix(in srgb, var(--primary) 50%, transparent);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header class="header">
+            <h1>Редактировать пользователя</h1>
+            <p>Измените данные пользователя</p>
+        </header>
+
+        <div class="card">
+            <form method="post">
+                {% if current_user.rank == sys %}
+                <div class="form-group">
+                    <label for="login">Логин</label>
+                    <div class="input-wrapper">
+                        <div class="input-icon">
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                                <circle cx="12" cy="7" r="4"></circle>
+                            </svg>
+                        </div>
+                        <input type="text" id="login" name="login" value="{{ user.login }}">
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="password">Пароль (оставьте пустым, чтобы сохранить текущий)</label>
+                    <div class="input-wrapper">
+                        <div class="input-icon">
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+                                <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+                            </svg>
+                        </div>
+                        <input type="password" id="password" name="password">
+                    </div>
+                </div>
+                {% elif current_user.rank >= admin + 2 and user.rank < admin %}
+                <div class="form-group">
+                    <label for="login">Логин</label>
+                    <div class="input-wrapper">
+                        <div class="input-icon">
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                                <circle cx="12" cy="7" r="4"></circle>
+                            </svg>
+                        </div>
+                        <input type="text" id="login" name="login" value="{{ user.login }}">
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="password">Пароль (оставьте пустым, чтобы сохранить текущий)</label>
+                    <div class="input-wrapper">
+                        <div class="input-icon">
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+                                <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+                            </svg>
+                        </div>
+                        <input type="password" id="password" name="password">
+                    </div>
+                </div>
+                {% elif current_user.id == user.id %}
+                <div class="form-group">
+                    <label for="login">Логин</label>
+                    <div class="input-wrapper">
+                        <div class="input-icon">
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                                <circle cx="12" cy="7" r="4"></circle>
+                            </svg>
+                        </div>
+                        <input type="text" id="login" name="login" value="{{ user.login }}">
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="password">Пароль (оставьте пустым, чтобы сохранить текущий)</label>
+                    <div class="input-wrapper">
+                        <div class="input-icon">
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+                                <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+                            </svg>
+                        </div>
+                        <input type="password" id="password" name="password">
+                    </div>
+                </div>
+                {% endif %}
+
+                {% if current_user.rank == sys %}
+                <div class="form-group">
+                    <label for="rank">Ранг</label>
+                    <div class="input-wrapper">
+                        <div class="input-icon">
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M2 20h.01"></path>
+                                <path d="M7 20v-4"></path>
+                                <path d="M12 20v-8"></path>
+                                <path d="M17 20v-6"></path>
+                                <path d="M22 20V8"></path>
+                            </svg>
+                        </div>
+                        <input type="number" id="rank" name="rank" value="{{ user.rank }}">
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="data">Данные</label>
+                    <div class="input-wrapper">
+                        <div class="input-icon">
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                                <polyline points="17 8 12 3 7 8"></polyline>
+                                <line x1="12" y1="3" x2="12" y2="15"></line>
+                            </svg>
+                        </div>
+                        <input type="text" id="data" name="data" value="{{ user.data }}">
+                    </div>
+                </div>
+                {% endif %}
+
+                {% if current_user.rank >= admin + 1 %}
+                <div class="form-group">
+                    <label for="hwid">HWID</label>
+                    <div class="input-wrapper">
+                        <div class="input-icon">
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <rect x="2" y="4" width="20" height="16" rx="2"></rect>
+                                <path d="M9 12h6"></path>
+                                <path d="M15 8v8"></path>
+                            </svg>
+                        </div>
+                        <input type="text" id="hwid" name="hwid" value="{{ user.hwid }}">
+                    </div>
+                </div>
+                {% endif %}
+
+                <button type="submit">
+                    Сохранить изменения
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path>
+                        <polyline points="17 21 17 13 7 13 7 21"></polyline>
+                        <polyline points="7 3 7 8 15 8"></polyline>
+                    </svg>
+                </button>
+            </form>
+
+            {% if current_user.rank == sys %}
+            <form method="post" action="{{ url_for('delete_user', user_id=user.id) }}">
+                <button type="submit" class="delete-button">
+                    Удалить аккаунт
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M3 6h18"></path>
+                        <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"></path>
+                        <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"></path>
+                        <line x1="10" y1="11" x2="10" y2="17"></line>
+                        <line x1="14" y1="11" x2="14" y2="17"></line>
+                    </svg>
+                </button>
+            </form>
+            {% endif %}
+        </div>
+
+
+    </div>
+
+
+</body>
+</html>

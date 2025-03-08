@@ -1,0 +1,537 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Регистрация</title>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap">
+    <style>
+        :root {
+            /* Default theme (dark) */
+            --primary: #6D28D9;
+            --primary-hover: #7C3AED;
+            --bg-dark: #0F172A;
+            --bg-card: #1E293B;
+            --text: #E2E8F0;
+            --text-muted: #94A3B8;
+            --border: #2D3748;
+            --success: #10B981;
+            --error: #EF4444;
+            --gradient-start: #6D28D9;
+            --gradient-end: #9333EA;
+        }
+
+        [data-theme="light"] {
+            --primary: #8B5CF6;
+            --primary-hover: #7C3AED;
+            --bg-dark: #F1F5F9;
+            --bg-card: #ffffff;
+            --text: #1E293B;
+            --text-muted: #64748B;
+            --border: #E2E8F0;
+            --success: #059669;
+            --error: #DC2626;
+            --gradient-start: #8B5CF6;
+            --gradient-end: #6D28D9;
+        }
+
+        [data-theme="cyberpunk"] {
+            --primary: #FF0080;
+            --primary-hover: #FF3D9A;
+            --bg-dark: #000000;
+            --bg-card: #0A0A0F;
+            --text: #00FFF5;
+            --text-muted: #4DFFEB;
+            --border: #FF0080;
+            --success: #00FF9F;
+            --error: #FF3D3D;
+            --gradient-start: #FF0080;
+            --gradient-end: #7928CA;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-dark);
+            color: var(--text);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            line-height: 1.6;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow-x: hidden;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: radial-gradient(
+                circle at top right,
+                color-mix(in srgb, var(--gradient-start) 15%, transparent),
+                transparent 50%
+            );
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .container {
+            max-width: 480px;
+            margin: 2rem auto;
+            padding: 0 1.5rem;
+            width: 100%;
+            position: relative;
+            z-index: 1;
+        }
+
+        .theme-switcher {
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
+            margin-top: 2rem;
+        }
+
+        .theme-btn {
+            width: 3.2rem;
+            height: 3.2rem;
+            background: var(--bg-card);
+            border-radius: 50%;
+            cursor: pointer;
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: none;
+        }
+
+        .theme-btn::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--gradient-start), var(--gradient-end));
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            z-index: 1;
+        }
+
+        .theme-btn svg {
+            width: 1.5rem;
+            height: 1.5rem;
+            position: relative;
+            z-index: 2;
+            fill: var(--text);
+            opacity: 0.7;
+            transition: all 0.3s ease;
+        }
+
+        .theme-btn:hover {
+            transform: translateY(-3px) scale(1.05);
+            box-shadow: 0 8px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        .theme-btn:hover svg {
+            opacity: 1;
+            transform: scale(1.1);
+        }
+
+        .theme-btn.active {
+            transform: scale(1.15);
+        }
+
+        .theme-btn.active::before {
+            opacity: 1;
+        }
+
+        .theme-btn.active svg {
+            opacity: 1;
+            filter: drop-shadow(0 0 3px rgba(255, 255, 255, 0.5));
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 2rem;
+            padding: 2rem 0 1.5rem;
+            position: relative;
+            animation: fadeIn 0.8s ease-out;
+        }
+
+        .header::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 50px;
+            height: 3px;
+            background: linear-gradient(to right, var(--gradient-start), var(--gradient-end));
+            border-radius: 2px;
+            animation: expandWidth 0.8s ease-out;
+        }
+
+        @keyframes expandWidth {
+            from { width: 0; }
+            to { width: 50px; }
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(-15px);
+            } to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .header h1 {
+            font-size: 2.2rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+            background: linear-gradient(135deg, var(--gradient-start) 0%, var(--gradient-end) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            animation: gradientText 3s ease infinite;
+            background-size: 200% 200%;
+            letter-spacing: -0.5px;
+            text-transform: uppercase;
+        }
+
+        @keyframes gradientText {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        .header p {
+            color: var(--text-muted);
+            font-size: 1rem;
+        }
+
+        .card {
+            background: var(--bg-card);
+            border-radius: 20px;
+            padding: 2.2rem;
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.2),
+                        0 10px 10px -5px rgba(0, 0, 0, 0.1);
+            animation: slideUp 0.8s ease-out;
+            transition: all 0.3s ease;
+            border: 1px solid color-mix(in srgb, var(--border) 50%, transparent);
+            backdrop-filter: blur(10px);
+            position: relative;
+            overflow: hidden;
+        }
+
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 15px 25px rgba(0, 0, 0, 0.2),
+                        0 0 0 1px color-mix(in srgb, var(--primary) 30%, transparent);
+        }
+
+        .form-group {
+            margin-bottom: 1.8rem;
+            animation: fadeIn 0.8s ease-out;
+            position: relative;
+        }
+
+        .form-group:last-of-type {
+            margin-bottom: 2rem;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 0.7rem;
+            color: var(--text);
+            font-weight: 600;
+            transition: all 0.3s ease;
+            font-size: 1rem;
+            letter-spacing: 0.5px;
+        }
+
+        input {
+            width: 100%;
+            padding: 0.9rem 1.2rem;
+            padding-left: 3rem;
+            background: color-mix(in srgb, var(--bg-dark) 70%, transparent);
+            border: 2px solid var(--border);
+            border-radius: 14px;
+            color: var(--text);
+            font-size: 1.05rem;
+            transition: all 0.3s ease;
+            font-weight: 500;
+        }
+
+        input:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px color-mix(in srgb, var(--primary) 30%, transparent);
+            transform: translateY(-2px);
+        }
+
+        .input-wrapper {
+            position: relative;
+        }
+
+        .input-icon {
+            position: absolute;
+            left: 1.2rem;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--text-muted);
+            pointer-events: none;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .input-icon svg {
+            width: 1.2rem;
+            height: 1.2rem;
+            stroke: var(--text-muted);
+        }
+
+        button[type="submit"] {
+            width: 100%;
+            padding: 1rem;
+            background: linear-gradient(135deg, var(--gradient-start), var(--gradient-end));
+            color: white;
+            border: none;
+            border-radius: 14px;
+            font-size: 1.05rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-top: 1rem;
+            position: relative;
+            overflow: hidden;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.7rem;
+        }
+
+        button[type="submit"] svg {
+            width: 1.2rem;
+            height: 1.2rem;
+            stroke: white;
+            transition: all 0.3s ease;
+        }
+
+        button[type="submit"]::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, transparent, rgba(255, 255, 255, 0.3));
+            transform: translateX(-100%);
+            transition: transform 0.5s ease;
+        }
+
+        button[type="submit"]:hover::before {
+            transform: translateX(100%);
+        }
+
+        button[type="submit"]:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 15px color-mix(in srgb, var(--primary) 50%, transparent);
+        }
+
+        button[type="submit"]:hover svg {
+            transform: translateX(3px);
+        }
+
+        button[type="submit"]:active {
+            transform: translateY(-1px);
+        }
+
+        .account-link {
+            text-align: center;
+            margin-top: 1.2rem;
+            font-size: 1rem;
+            color: var(--text-muted);
+            animation: fadeIn 1s ease-out;
+        }
+
+        .account-link a {
+            color: var(--primary);
+            text-decoration: none;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            position: relative;
+            display: inline-block;
+            margin-left: 0.5rem;
+        }
+
+        .account-link a::after {
+            content: '';
+            position: absolute;
+            width: 100%;
+            height: 2px;
+            bottom: -2px;
+            left: 0;
+            background: linear-gradient(to right, var(--gradient-start), var(--gradient-end));
+            transform: scaleX(0);
+            transform-origin: bottom right;
+            transition: transform 0.3s ease;
+        }
+
+        .account-link a:hover {
+            color: var(--primary-hover);
+        }
+
+        .account-link a:hover::after {
+            transform: scaleX(1);
+            transform-origin: bottom left;
+        }
+
+        /* Error message styling */
+        .error-message {
+            background: color-mix(in srgb, var(--error) 15%, transparent);
+            border: 1px solid color-mix(in srgb, var(--error) 30%, transparent);
+            color: var(--error);
+            padding: 1rem;
+            border-radius: 14px;
+            margin-bottom: 1.5rem;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            animation: shake 0.5s cubic-bezier(.36,.07,.19,.97) both;
+        }
+
+        .error-message svg {
+            width: 1.2rem;
+            height: 1.2rem;
+            stroke: var(--error);
+            flex-shrink: 0;
+        }
+
+        @keyframes shake {
+            10%, 90% { transform: translate3d(-1px, 0, 0); }
+            20%, 80% { transform: translate3d(2px, 0, 0); }
+            30%, 50%, 70% { transform: translate3d(-4px, 0, 0); }
+            40%, 60% { transform: translate3d(4px, 0, 0); }
+        }
+
+        @keyframes float {
+            0% { transform: translateY(0px); }
+            50% { transform: translateY(-5px); }
+            100% { transform: translateY(0px); }
+        }
+
+        .pulse {
+            animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        @keyframes bounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
+        }
+
+        .bounce {
+            animation: bounce 2s ease infinite;
+        }
+
+        /* Glowing effect for active theme */
+        .theme-btn.active {
+            box-shadow: 0 0 10px var(--primary), 0 0 20px color-mix(in srgb, var(--primary) 50%, transparent);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header class="header">
+            <h1>Регистрация</h1>
+            <p>Создайте новый аккаунт</p>
+        </header>
+
+        <div class="card">
+            {% if error %}
+            <div class="error-message">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="12" cy="12" r="10"></circle>
+                    <line x1="12" y1="8" x2="12" y2="12"></line>
+                    <line x1="12" y1="16" x2="12.01" y2="16"></line>
+                </svg>
+                {{ error }}
+            </div>
+            {% endif %}
+
+            <form method="POST">
+                <div class="form-group">
+                    <label for="login">Логин</label>
+                    <div class="input-wrapper">
+                        <div class="input-icon">
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                                <circle cx="12" cy="7" r="4"></circle>
+                            </svg>
+                        </div>
+                        <input type="text" id="login" name="login" placeholder="Придумайте логин" required>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="password">Пароль</label>
+                    <div class="input-wrapper">
+                        <div class="input-icon">
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+                                <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+                            </svg>
+                        </div>
+                        <input type="password" id="password" name="password" placeholder="Придумайте пароль" required>
+                    </div>
+                </div>
+
+                <button type="submit">
+                    Зарегистрироваться
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                        <circle cx="8.5" cy="7" r="4"></circle>
+                        <line x1="20" y1="8" x2="20" y2="14"></line>
+                        <line x1="23" y1="11" x2="17" y2="11"></line>
+                    </svg>
+                </button>
+            </form>
+
+            <div class="account-link">
+                Уже есть аккаунт?<a href="{{ url_for('login') }}">Войти</a>
+            </div>
+        </div>
+</div>
+
+</body>
+</html>
