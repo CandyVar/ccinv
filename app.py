@@ -165,6 +165,38 @@ def api_login():
     else:
         return jsonify({"success": False}), 401
 
+@app.route('/api/sethwid', methods=['POST'])
+def set_hwid():
+    data = request.get_json()
+
+    # Проверяем наличие токена в заголовках
+    token = request.headers.get('Authorization')
+    if token != f"Bearer {APP_TOKEN}":
+        return jsonify({"success": False, "message": "Unauthorized"}), 403
+
+    email = data.get('email')
+    hwid = data.get('hwid')
+    password = data.get('password')  # Добавляем поле для пароля
+
+    # Создаем сессию для работы с БД
+
+    # Находим пользователя по email
+    user = User.query.filter(User.email == email).first()
+
+    if user:
+        # Проверяем правильность пароля
+        if user.check_password(password):
+            if user.hwid is None or user.hwid == "None":
+                user.set_hwid(hwid)
+                db.session.commit()
+                return jsonify({"success": True, "message": "HWID updated"})
+            else:
+                return jsonify({"success": False, "message": "HWID already set"}), 400
+        else:
+            return jsonify({"success": False, "message": "Invalid password"}), 401
+    else:
+        return jsonify({"success": False, "message": "User not found"}), 404
+
 a = {
     "clicker": {
         "mindel": 0,
