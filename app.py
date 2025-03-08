@@ -141,6 +141,30 @@ def api_clikcer():
     else:
         return jsonify({"success": False, "msg": id}), 401
 
+
+@app.route('/api/login', methods=['POST'])
+def api_login():
+    # Проверяем наличие токена в заголовках
+    token = request.headers.get('Authorization')
+    if token != f"Bearer {APP_TOKEN}":
+        return jsonify({"success": False, "message": "Unauthorized"}), 403
+
+    data = request.get_json()
+
+    email = data.get('email')
+    password = data.get('password')
+
+
+    # Находим пользователя по email
+    user = User.query.filter(User.email == email).first()
+
+    if user and user.check_password(password) and user.rank > 0:
+        return jsonify({"hwid": user.hwid,
+                        "id": user.id,
+                        "rank": user.rank})
+    else:
+        return jsonify({"success": False}), 401
+
 a = {
     "clicker": {
         "mindel": 0,
