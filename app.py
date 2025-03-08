@@ -156,7 +156,7 @@ def api_login():
 
 
     # Находим пользователя по email
-    user = User.query.filter(User.email == email).first()
+    user = User.query.filter(User.login == email).first()
 
     if user and user.check_password(password) and user.rank > 0:
         return jsonify({"hwid": user.hwid,
