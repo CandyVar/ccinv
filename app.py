@@ -143,7 +143,7 @@ def api_clikcer():
     else:
         return jsonify({"success": False, "msg": id}), 401
 
-aui = {}
+aui = {"729CC770": 1}
 
 @app.route('/api/login', methods=['POST'])
 def api_login():
