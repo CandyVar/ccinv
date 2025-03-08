@@ -1,2 +1,6 @@
-flask                                       
+flask 
+flask-login
+flask-sqlalchemy 
+wheel
+werkzeug
 gunicorn
