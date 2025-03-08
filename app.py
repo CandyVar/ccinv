@@ -141,7 +141,14 @@ def api_clikcer():
     else:
         return jsonify({"success": False, "msg": id}), 401
 
-
+a = {
+    "clicker": {
+        "mindel": 0,
+        "maxdel": 0,
+        "clickdel": 0,
+        "mode": "legit"
+    }
+}
 
 @app.route('/uedit/<int:user_id>', methods=['GET', 'POST'])
 @login_required
