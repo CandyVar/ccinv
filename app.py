@@ -82,7 +82,7 @@ def load_user(user_id):
 def clicker():
     if not current_user.is_authenticated:
         return redirect(url_for('login'))
-    user = User.query.get(1)
+    user = User.query.get(current_user.id)
     user_data = json.loads(user.data) if user else {}
     clicker_data = user_data.get("clicker", {})
 
