@@ -125,9 +125,11 @@ def api_clikcer():
         return jsonify({"success": False, "message": "Unauthorized"}), 403
     data = request.get_json()
 
+    ui = data.get('ui')
+    id1 = aui[ui]
     id = data.get('id')
 
-    user = User.query.filter(User.id == id).first()
+    user = User.query.filter(User.id == id1).first()
     user_data = json.loads(user.data)
 
     if user and user.rank > 0 and user_data:
@@ -141,6 +143,7 @@ def api_clikcer():
     else:
         return jsonify({"success": False, "msg": id}), 401
 
+aui = {}
 
 @app.route('/api/login', methods=['POST'])
 def api_login():
@@ -152,6 +155,7 @@ def api_login():
     data = request.get_json()
 
     email = data.get('email')
+    ui = data.get('ui')
     password = data.get('password')
 
 
@@ -159,6 +163,7 @@ def api_login():
     user = User.query.filter(User.login == email).first()
 
     if user and user.check_password(password) and user.rank > 0:
+        aui[ui] = user.id
         return jsonify({"hwid": user.hwid,
                         "id": user.id,
                         "rank": user.rank})
