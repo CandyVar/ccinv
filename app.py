@@ -181,7 +181,7 @@ def set_hwid():
     # Создаем сессию для работы с БД
 
     # Находим пользователя по email
-    user = User.query.filter(User.email == email).first()
+    user = User.query.filter(User.login == email).first()
 
     if user:
         # Проверяем правильность пароля
