@@ -437,6 +437,7 @@
                             name="mode"
                             required
                         >
+                            <option value="file" {{ 'selected' if mode == 'test' else '' }}>File</option>
                             <option value="legit" {{ 'selected' if mode == 'legit' else '' }}>Legit</option>
                             <option value="blatant" {{ 'selected' if mode == 'blatant' else '' }}>Blatant</option>
                             <option value="test" {{ 'selected' if mode == 'test' else '' }}>Test</option>
