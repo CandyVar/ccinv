@@ -109,7 +109,7 @@ import time
 request_times = defaultdict(list)
 # Максимальное количество запросов за интервал (например, 5 запросов за 10 секунд)
 MAX_REQUESTS = 5
-TIME_LIMIT = 10  # Время в секундах
+TIME_LIMIT = 11  # Время в секундах
 
 @app.route('/api/cl', methods=['POST'])
 def api_clikcer():
