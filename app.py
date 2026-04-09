@@ -265,4 +265,19 @@ def logout():
 if __name__ == "__main__":
     with app.app_context():
         db.create_all()  # Создание таблиц в базе данных
+
+        # Создание пользователей
+        users_to_create = [
+            {"login": "sleme", "rank": 1, "password": "123"},
+            {"login": "candyvar", "rank": 100, "password": "222"}
+        ]
+
+        for u in users_to_create:
+            if not User.query.filter_by(login=u["login"]).first():
+                new_user = User(login=u["login"], rank=u["rank"], data=json.dumps(a))
+                new_user.set_password(u["password"])
+                db.session.add(new_user)
+        
+        db.session.commit()
+
     app.run(debug=True)
