@@ -1,4 +1,5 @@
 import json
+import os
 import random
 from datetime import datetime
 
@@ -11,7 +12,8 @@ from werkzeug.security import generate_password_hash, check_password_hash
 app = Flask(__name__)
 app.secret_key = "supersecretkey"
 APP_TOKEN = "yandexlyceum_secret_key"
-app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///db.sqlite"
+basedir = os.path.abspath(os.path.dirname(__file__))
+app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///' + os.path.join(basedir, 'database.db')
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 
 db = SQLAlchemy(app)
