@@ -52,7 +52,7 @@ def register():
             error = 'Логин уже существует!'
         else:
             hashed_password = generate_password_hash(password)
-            new_user = User(login=login, password=hashed_password, rank=1, data=json.dumps({}))
+            new_user = User(login=login, password=hashed_password, rank=0, data=json.dumps({}))
             db.session.add(new_user)
             db.session.commit()
             return redirect(url_for('login'))
