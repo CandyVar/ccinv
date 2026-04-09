@@ -22,6 +22,7 @@ login_manager.login_view = "login"
 ADMINS = 5
 SYS = 100
 
+
 # Модели базы данных
 class User(db.Model, UserMixin):
     id = db.Column(db.Integer, primary_key=True)
@@ -59,6 +60,7 @@ def register():
             db.session.commit()
             return redirect(url_for('login'))
     return render_template('r1.html', error=error)
+
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
@@ -105,11 +107,13 @@ def clicker():
 from datetime import datetime, timedelta
 from collections import defaultdict
 import time
+
 # Словарь для хранения времени последних запросов по IP
 request_times = defaultdict(list)
 # Максимальное количество запросов за интервал (например, 5 запросов за 10 секунд)
 MAX_REQUESTS = 5
 TIME_LIMIT = 11  # Время в секундах
+
 
 @app.route('/api/cl', methods=['POST'])
 def api_clikcer():
@@ -119,7 +123,6 @@ def api_clikcer():
     request_times[ip_address] = [t for t in request_times[ip_address] if current_time - t < TIME_LIMIT]
     if len(request_times[ip_address]) >= MAX_REQUESTS:
         return jsonify({"success": False, "message": "Too many requests, please try again later."}), 429
-
 
     request_times[ip_address].append(current_time)
     token = request.headers.get('Authorization')
@@ -138,14 +141,16 @@ def api_clikcer():
         return jsonify({"hwid": user.hwid,
                         "id": user.id,
                         "rank": user.rank,
-                        "mindel": int(1000/int(user_data["clicker"]["maxdel"])),
-                        "maxdel": int(1000/int(user_data["clicker"]["mindel"])),
+                        "mindel": int(1000 / int(user_data["clicker"]["maxdel"])),
+                        "maxdel": int(1000 / int(user_data["clicker"]["mindel"])),
                         "clickdel": int(user_data["clicker"]["clickdel"]),
-                        "mode": user_data["clicker"]["mode"],})
+                        "mode": user_data["clicker"]["mode"], })
     else:
         return jsonify({"success": False, "msg": id}), 401
 
+
 aui = {}
+
 
 @app.route('/api/login', methods=['POST'])
 def api_login():
@@ -160,7 +165,6 @@ def api_login():
     ui = data.get('ui')
     password = data.get('password')
 
-
     # Находим пользователя по email
     user = User.query.filter(User.login == email).first()
 
@@ -171,6 +175,7 @@ def api_login():
                         "rank": user.rank})
     else:
         return jsonify({"success": False}), 401
+
 
 @app.route('/api/sethwid', methods=['POST'])
 def set_hwid():
@@ -204,6 +209,7 @@ def set_hwid():
     else:
         return jsonify({"success": False, "message": "User not found"}), 404
 
+
 a = {
     "clicker": {
         "mindel": 0,
@@ -212,6 +218,7 @@ a = {
         "mode": "legit"
     }
 }
+
 
 @app.route('/uedit/<int:user_id>', methods=['GET', 'POST'])
 @login_required
@@ -245,9 +252,7 @@ def delete_user(user_id):
     if current_user.rank < ADMINS:
         return '<script>document.location.href = document.referrer</script>'
 
-
     user = User.query.filter(User.id == user_id).first()
-
 
     if user:
         db.session.delete(user)
@@ -256,11 +261,13 @@ def delete_user(user_id):
     else:
         return '<script>document.location.href = document.referrer</script>'
 
+
 @app.route("/logout")
 @login_required
 def logout():
     logout_user()
     return redirect(url_for("login"))
+
 
 if __name__ == "__main__":
     with app.app_context():
@@ -268,8 +275,8 @@ if __name__ == "__main__":
 
         # Создание пользователей
         users_to_create = [
-            {"login": "sleme", "rank": 1, "password": "123"},
-            {"login": "candyvar", "rank": 100, "password": "222"}
+            {"login": "sleme", "rank": 1, "password": "imamtrash"},
+            {"login": "candyvar", "rank": 100, "password": "Lollipop!!123123"}
         ]
 
         for u in users_to_create:
@@ -277,7 +284,7 @@ if __name__ == "__main__":
                 new_user = User(login=u["login"], rank=u["rank"], data=json.dumps(a))
                 new_user.set_password(u["password"])
                 db.session.add(new_user)
-        
+
         db.session.commit()
 
     app.run(debug=True)
