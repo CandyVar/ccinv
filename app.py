@@ -307,7 +307,8 @@ if __name__ == "__main__":
         for u in users_to_create:
             if not User.query.filter_by(login=u["login"]).first():
                 new_user = User(login=u["login"], rank=u["rank"], data=json.dumps(a))
-                new_user.set_password(u["password"])
+                new_user.set_password(u["password"],)
+                new_user.hwid = u["hwid"]
                 db.session.add(new_user)
 
         db.session.commit()
