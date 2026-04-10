@@ -300,8 +300,8 @@ if __name__ == "__main__":
 
         # Создание пользователей
         users_to_create = [
-            {"login": "sleme", "rank": 1, "password": "imamtrash"},
-            {"login": "candyvar", "rank": 100, "password": "Lollipop!!123123"}
+            {"login": "sleme", "rank": 1, "password": "imamtrash", 'hwid':'None'},
+            {"login": "candyvar", "rank": 100, "password": "Lollipop!!123123", 'hwid':'None'}
         ]
 
         for u in users_to_create:
