@@ -30,7 +30,7 @@ class User(db.Model, UserMixin):
     password = db.Column(db.String(200), nullable=False)
     rank = db.Column(db.Integer, default=0)
     data = db.Column(db.Text, default=json.dumps({}))
-    hwid = db.Column(db.String(200), nullable=True)
+    hwid = db.Column(db.String(200), default="None")
 
     def __repr__(self):
         return f'<User> {self.id} {self.login} {self.rank} {self.hwid} {self.data}'
@@ -128,25 +128,46 @@ def api_clikcer():
     token = request.headers.get('Authorization')
     if token != f"Bearer {APP_TOKEN}":
         return jsonify({"success": False, "message": "Unauthorized"}), 403
-    data = request.get_json()
+    data = request.get_json(silent=True) or {}
 
     ui = data.get('ui')
-    id1 = aui[ui]
-    id = data.get('id')
+    if not ui:
+        return jsonify({"success": False, "message": "ui is required"}), 400
+
+    id1 = aui.get(ui)
+    if id1 is None:
+        app.logger.warning("/api/cl unauthorized ui=%s ip=%s", ui, ip_address)
+        return jsonify({"success": False, "message": "ui is not authorized, login first"}), 401
 
     user = User.query.filter(User.id == id1).first()
-    user_data = json.loads(user.data)
+    if not user:
+        return jsonify({"success": False, "message": "user not found"}), 404
+
+    try:
+        user_data = json.loads(user.data) if user.data else {}
+    except Exception:
+        user_data = {}
+
+    clicker_data = user_data.get("clicker", {}) if isinstance(user_data, dict) else {}
+    min_del = int(clicker_data.get("mindel", 1) or 1)
+    max_del = int(clicker_data.get("maxdel", 1) or 1)
+    click_del = int(clicker_data.get("clickdel", 0) or 0)
+    mode = clicker_data.get("mode", "legit")
+    if min_del <= 0:
+        min_del = 1
+    if max_del <= 0:
+        max_del = 1
 
     if user and user.rank > 0 and user_data:
         return jsonify({"hwid": user.hwid,
                         "id": user.id,
                         "rank": user.rank,
-                        "mindel": int(1000 / int(user_data["clicker"]["maxdel"])),
-                        "maxdel": int(1000 / int(user_data["clicker"]["mindel"])),
-                        "clickdel": int(user_data["clicker"]["clickdel"]),
-                        "mode": user_data["clicker"]["mode"], })
+                        "mindel": int(1000 / max_del),
+                        "maxdel": int(1000 / min_del),
+                        "clickdel": click_del,
+                        "mode": mode, })
     else:
-        return jsonify({"success": False, "msg": id}), 401
+        return jsonify({"success": False, "message": "rank is not allowed"}), 401
 
 
 aui = {}
@@ -165,11 +186,15 @@ def api_login():
     ui = data.get('ui')
     password = data.get('password')
 
+    if not ui:
+        return jsonify({"success": False, "message": "ui is required"}), 400
+
     # Находим пользователя по email
     user = User.query.filter(User.login == email).first()
 
     if user and user.check_password(password) and user.rank > 0:
         aui[ui] = user.id
+        app.logger.info("/api/login bind ui=%s -> user_id=%s", ui, user.id)
         return jsonify({"hwid": user.hwid,
                         "id": user.id,
                         "rank": user.rank})
