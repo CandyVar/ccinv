@@ -181,8 +181,8 @@ import time
 # Словарь для хранения времени последних запросов по IP
 request_times = defaultdict(list)
 # Максимальное количество запросов за интервал (например, 5 запросов за 10 секунд)
-MAX_REQUESTS = 5
-TIME_LIMIT = 11  # Время в секундах
+MAX_REQUESTS = 10
+TIME_LIMIT = 5  # Время в секундах
 
 
 @app.route('/api/cl', methods=['POST'])
@@ -208,13 +208,22 @@ def api_clikcer():
     user_data = json.loads(user.data)
 
     if user and user.rank > 0 and user_data:
-        return jsonify({"hwid": user.hwid,
-                        "id": user.id,
-                        "rank": user.rank,
-                        "mindel": int(1000 / int(user_data["clicker"]["maxdel"])),
-                        "maxdel": int(1000 / int(user_data["clicker"]["mindel"])),
-                        "clickdel": int(user_data["clicker"]["clickdel"]),
-                        "mode": user_data["clicker"]["mode"], })
+        maxdel_val = int(user_data["clicker"].get("maxdel", 1))
+        mindel_val = int(user_data["clicker"].get("mindel", 1))
+
+        # защита от деления на 0
+        mindel_result = int(1000 / maxdel_val) if maxdel_val != 0 else 0
+        maxdel_result = int(1000 / mindel_val) if mindel_val != 0 else 0
+
+        return jsonify({
+            "hwid": user.hwid,
+            "id": user.id,
+            "rank": user.rank,
+            "mindel": mindel_result,
+            "maxdel": maxdel_result,
+            "clickdel": int(user_data["clicker"].get("clickdel", 0)),
+            "mode": user_data["clicker"].get("mode")
+        })
     else:
         return jsonify({"success": False, "msg": id}), 401
 
