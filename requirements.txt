@@ -4,3 +4,4 @@ flask-sqlalchemy
 wheel
 werkzeug
 gunicorn
+pycryptodome

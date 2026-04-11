@@ -1,6 +1,9 @@
 import json
 import os
 import random
+import base64
+import hashlib
+import hmac
 from datetime import datetime
 
 from flask import Flask, render_template, request, redirect, url_for, flash, jsonify
@@ -8,6 +11,8 @@ from flask_login import LoginManager, UserMixin, login_user, logout_user, login_
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy import desc
 from werkzeug.security import generate_password_hash, check_password_hash
+from Crypto.Cipher import AES
+from Crypto.Random import get_random_bytes
 
 app = Flask(__name__)
 app.secret_key = "supersecretkey"
@@ -15,6 +20,71 @@ APP_TOKEN = "yandexlyceum_secret_key"
 basedir = os.path.abspath(os.path.dirname(__file__))
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///' + os.path.join(basedir, 'database.db')
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
+API_KEY = b"2SWbBqWJi4mRTEmnbgSX5j08etbSbQ/w"
+UPDATE_FILE_NAME = os.getenv("UPDATE_FILE_NAME", "awesomeProject.exe")
+UPDATE_VERSION = os.getenv("UPDATE_VERSION", "1.0.0")
+UPDATE_SIGN_SECRET = os.getenv("UPDATE_SIGN_SECRET", "candy_update_sign_secret_v1_change_me")
+
+
+def _pkcs7_pad(data: bytes, block_size: int = AES.block_size) -> bytes:
+    pad_len = block_size - len(data) % block_size
+    return data + bytes([pad_len]) * pad_len
+
+
+def _pkcs7_unpad(data: bytes, block_size: int = AES.block_size) -> bytes:
+    if not data:
+        raise ValueError("empty data")
+    pad_len = data[-1]
+    if pad_len < 1 or pad_len > block_size:
+        raise ValueError("bad padding")
+    if data[-pad_len:] != bytes([pad_len]) * pad_len:
+        raise ValueError("bad padding bytes")
+    return data[:-pad_len]
+
+
+def encrypt_payload(obj: dict) -> str:
+    plaintext = json.dumps(obj, separators=(",", ":")).encode("utf-8")
+    iv = get_random_bytes(AES.block_size)
+    cipher = AES.new(API_KEY, AES.MODE_CBC, iv)
+    ciphertext = cipher.encrypt(_pkcs7_pad(plaintext))
+    return base64.b64encode(iv + ciphertext).decode("utf-8")
+
+
+def decrypt_payload(data_b64: str) -> dict:
+    raw = base64.b64decode(data_b64)
+    if len(raw) < AES.block_size:
+        raise ValueError("payload too short")
+    iv = raw[:AES.block_size]
+    ciphertext = raw[AES.block_size:]
+    cipher = AES.new(API_KEY, AES.MODE_CBC, iv)
+    plain = cipher.decrypt(ciphertext)
+    return json.loads(_pkcs7_unpad(plain).decode("utf-8"))
+
+
+def encrypted_response(payload: dict, status: int = 200):
+    return jsonify({"data": encrypt_payload(payload)}), status
+
+
+def parse_encrypted_request():
+    data = request.get_json(silent=True) or {}
+    encrypted = data.get("data")
+    if not isinstance(encrypted, str) or not encrypted:
+        return None, encrypted_response({"success": False, "message": "encrypted field 'data' is required"}, 400)
+    try:
+        return decrypt_payload(encrypted), None
+    except Exception:
+        return None, encrypted_response({"success": False, "message": "invalid encrypted payload"}, 400)
+
+
+def file_sha256(path: str) -> str:
+    with open(path, "rb") as f:
+        return hashlib.sha256(f.read()).hexdigest()
+
+
+def sign_update_payload(version: str, sha256_hex: str, file_name: str) -> str:
+    message = f"{version}|{sha256_hex}|{file_name}".encode("utf-8")
+    signature = hmac.new(UPDATE_SIGN_SECRET.encode("utf-8"), message, hashlib.sha256).digest()
+    return base64.b64encode(signature).decode("utf-8")
 
 db = SQLAlchemy(app)
 login_manager = LoginManager(app)
@@ -30,7 +100,7 @@ class User(db.Model, UserMixin):
     password = db.Column(db.String(200), nullable=False)
     rank = db.Column(db.Integer, default=0)
     data = db.Column(db.Text, default=json.dumps({}))
-    hwid = db.Column(db.String(200), default="None")
+    hwid = db.Column(db.String(200), nullable=True)
 
     def __repr__(self):
         return f'<User> {self.id} {self.login} {self.rank} {self.hwid} {self.data}'
@@ -128,46 +198,25 @@ def api_clikcer():
     token = request.headers.get('Authorization')
     if token != f"Bearer {APP_TOKEN}":
         return jsonify({"success": False, "message": "Unauthorized"}), 403
-    data = request.get_json(silent=True) or {}
+    data = request.get_json()
 
     ui = data.get('ui')
-    if not ui:
-        return jsonify({"success": False, "message": "ui is required"}), 400
-
-    id1 = aui.get(ui)
-    if id1 is None:
-        app.logger.warning("/api/cl unauthorized ui=%s ip=%s", ui, ip_address)
-        return jsonify({"success": False, "message": "ui is not authorized, login first"}), 401
+    id1 = aui[ui]
+    id = data.get('id')
 
     user = User.query.filter(User.id == id1).first()
-    if not user:
-        return jsonify({"success": False, "message": "user not found"}), 404
-
-    try:
-        user_data = json.loads(user.data) if user.data else {}
-    except Exception:
-        user_data = {}
-
-    clicker_data = user_data.get("clicker", {}) if isinstance(user_data, dict) else {}
-    min_del = int(clicker_data.get("mindel", 1) or 1)
-    max_del = int(clicker_data.get("maxdel", 1) or 1)
-    click_del = int(clicker_data.get("clickdel", 0) or 0)
-    mode = clicker_data.get("mode", "legit")
-    if min_del <= 0:
-        min_del = 1
-    if max_del <= 0:
-        max_del = 1
+    user_data = json.loads(user.data)
 
     if user and user.rank > 0 and user_data:
         return jsonify({"hwid": user.hwid,
                         "id": user.id,
                         "rank": user.rank,
-                        "mindel": int(1000 / max_del),
-                        "maxdel": int(1000 / min_del),
-                        "clickdel": click_del,
-                        "mode": mode, })
+                        "mindel": int(1000 / int(user_data["clicker"]["maxdel"])),
+                        "maxdel": int(1000 / int(user_data["clicker"]["mindel"])),
+                        "clickdel": int(user_data["clicker"]["clickdel"]),
+                        "mode": user_data["clicker"]["mode"], })
     else:
-        return jsonify({"success": False, "message": "rank is not allowed"}), 401
+        return jsonify({"success": False, "msg": id}), 401
 
 
 aui = {}
@@ -175,64 +224,126 @@ aui = {}
 
 @app.route('/api/login', methods=['POST'])
 def api_login():
-    # Проверяем наличие токена в заголовках
     token = request.headers.get('Authorization')
     if token != f"Bearer {APP_TOKEN}":
-        return jsonify({"success": False, "message": "Unauthorized"}), 403
+        return encrypted_response({"success": False, "message": "Unauthorized"}, 403)
 
-    data = request.get_json()
+    data, err = parse_encrypted_request()
+    if err:
+        return err
 
     email = data.get('email')
     ui = data.get('ui')
     password = data.get('password')
-
-    if not ui:
-        return jsonify({"success": False, "message": "ui is required"}), 400
 
     # Находим пользователя по email
     user = User.query.filter(User.login == email).first()
 
     if user and user.check_password(password) and user.rank > 0:
         aui[ui] = user.id
-        app.logger.info("/api/login bind ui=%s -> user_id=%s", ui, user.id)
-        return jsonify({"hwid": user.hwid,
-                        "id": user.id,
-                        "rank": user.rank})
+        return encrypted_response({"hwid": user.hwid,
+                                   "id": user.id,
+                                   "rank": user.rank})
     else:
-        return jsonify({"success": False}), 401
+        return encrypted_response({"success": False}, 401)
 
 
 @app.route('/api/sethwid', methods=['POST'])
 def set_hwid():
-    data = request.get_json()
-
-    # Проверяем наличие токена в заголовках
     token = request.headers.get('Authorization')
     if token != f"Bearer {APP_TOKEN}":
-        return jsonify({"success": False, "message": "Unauthorized"}), 403
+        return encrypted_response({"success": False, "message": "Unauthorized"}, 403)
+
+    data, err = parse_encrypted_request()
+    if err:
+        return err
 
     email = data.get('email')
     hwid = data.get('hwid')
-    password = data.get('password')  # Добавляем поле для пароля
-
-    # Создаем сессию для работы с БД
-
-    # Находим пользователя по email
+    password = data.get('password')
     user = User.query.filter(User.login == email).first()
 
     if user:
-        # Проверяем правильность пароля
         if user.check_password(password):
             if user.hwid is None or user.hwid == "None":
                 user.set_hwid(hwid)
                 db.session.commit()
-                return jsonify({"success": True, "message": "HWID updated"})
+                return encrypted_response({"success": True, "message": "HWID updated"})
             else:
-                return jsonify({"success": False, "message": "HWID already set"}), 400
+                return encrypted_response({"success": False, "message": "HWID already set"}, 400)
         else:
-            return jsonify({"success": False, "message": "Invalid password"}), 401
+            return encrypted_response({"success": False, "message": "Invalid password"}, 401)
     else:
-        return jsonify({"success": False, "message": "User not found"}), 404
+        return encrypted_response({"success": False, "message": "User not found"}, 404)
+
+
+@app.route('/api/update-manifest', methods=['POST'])
+def api_update_manifest():
+    token = request.headers.get('Authorization')
+    if token != f"Bearer {APP_TOKEN}":
+        return encrypted_response({"success": False, "message": "Unauthorized"}, 403)
+
+    data, err = parse_encrypted_request()
+    if err:
+        return err
+
+    hwid = data.get('hwid')
+    if not hwid:
+        return encrypted_response({"success": False, "message": "hwid is required"}, 400)
+
+    file_path = os.path.join(basedir, UPDATE_FILE_NAME)
+    if not os.path.exists(file_path):
+        return encrypted_response({"success": False, "message": "update file not found"}, 404)
+
+    try:
+        sha = file_sha256(file_path)
+        sig = sign_update_payload(UPDATE_VERSION, sha, UPDATE_FILE_NAME)
+    except Exception as e:
+        return encrypted_response({"success": False, "message": f"signing failed: {e}"}, 500)
+
+    return encrypted_response({
+        "success": True,
+        "latest_version": UPDATE_VERSION,
+        "latest_hash": sha,
+        "file_name": UPDATE_FILE_NAME,
+        "signature": sig
+    })
+
+
+@app.route('/api/update-file', methods=['POST'])
+def api_update_file():
+    token = request.headers.get('Authorization')
+    if token != f"Bearer {APP_TOKEN}":
+        return encrypted_response({"success": False, "message": "Unauthorized"}, 403)
+
+    data, err = parse_encrypted_request()
+    if err:
+        return err
+
+    hwid = data.get('hwid')
+    if not hwid:
+        return encrypted_response({"success": False, "message": "hwid is required"}, 400)
+
+    file_path = os.path.join(basedir, UPDATE_FILE_NAME)
+    if not os.path.exists(file_path):
+        return encrypted_response({"success": False, "message": "update file not found"}, 404)
+
+    try:
+        with open(file_path, "rb") as f:
+            raw = f.read()
+        sha = hashlib.sha256(raw).hexdigest()
+        sig = sign_update_payload(UPDATE_VERSION, sha, UPDATE_FILE_NAME)
+    except Exception as e:
+        return encrypted_response({"success": False, "message": f"failed to prepare update: {e}"}, 500)
+
+    return encrypted_response({
+        "success": True,
+        "version": UPDATE_VERSION,
+        "file_name": UPDATE_FILE_NAME,
+        "sha256": sha,
+        "signature": sig,
+        "file_data": base64.b64encode(raw).decode("utf-8")
+    })
 
 
 a = {
@@ -300,15 +411,14 @@ if __name__ == "__main__":
 
         # Создание пользователей
         users_to_create = [
-            {"login": "sleme", "rank": 3, "password": "imamtrash", 'hwid':'None'},
-            {"login": "candyvar", "rank": 100, "password": "Lollipop!!123123", 'hwid':'b4418065-dcbf-3ff8-a5e6-6ff1072aa296'}
+            {"login": "sleme", "rank": 1, "password": "imamtrash"},
+            {"login": "candyvar", "rank": 100, "password": "Lollipop!!123123"}
         ]
 
         for u in users_to_create:
             if not User.query.filter_by(login=u["login"]).first():
                 new_user = User(login=u["login"], rank=u["rank"], data=json.dumps(a))
-                new_user.set_password(u["password"],)
-                new_user.hwid = u["hwid"]
+                new_user.set_password(u["password"])
                 db.session.add(new_user)
 
         db.session.commit()
