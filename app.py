@@ -22,7 +22,7 @@ app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///' + os.path.join(basedir, 'da
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 API_KEY = b"2SWbBqWJi4mRTEmnbgSX5j08etbSbQ/w"
 UPDATE_FILE_NAME = os.getenv("UPDATE_FILE_NAME", "awesomeProject.exe")
-UPDATE_VERSION = os.getenv("UPDATE_VERSION", "1.0.0")
+UPDATE_VERSION = os.getenv("UPDATE_VERSION", "1.9.0")
 UPDATE_SIGN_SECRET = os.getenv("UPDATE_SIGN_SECRET", "candy_update_sign_secret_v1_change_me")
 
 
